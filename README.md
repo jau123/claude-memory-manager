@@ -1,16 +1,16 @@
 <h1 align="center">Claude Memory Manager</h1>
 
 <p align="center">
-  <strong>A methodology skill that teaches Claude Code <em>how</em> to record memories — you decide <em>when</em>.</strong>
+  <strong>Curate, don't accumulate.</strong>
   <br>
-  <sub>Built for serious development — when a project iterates for months, the memory library accumulates drift and outdated entries.</sub>
+  A Claude Code skill that keeps your project's memory library auditable, named consistently, and free of drift — for months, not days.
 </p>
 
 <p align="center">
+  <a href="https://github.com/jau123/claude-memory-manager/stargazers"><img src="https://img.shields.io/github/stars/jau123/claude-memory-manager?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/jau123/claude-memory-manager/commits/main"><img src="https://img.shields.io/github/last-commit/jau123/claude-memory-manager?style=flat-square" alt="Last commit"></a>
+  <img src="https://img.shields.io/badge/Claude_Code-2.1%2B-orange?style=flat-square" alt="Claude Code 2.1+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="MIT"></a>
-  <img src="https://img.shields.io/badge/Platform-Claude_Code-orange?style=flat-square" alt="Claude Code">
-  <img src="https://img.shields.io/badge/Storage-Zero-green?style=flat-square" alt="Zero storage">
-  <img src="https://img.shields.io/badge/Hooks-None-blue?style=flat-square" alt="No hooks">
 </p>
 
 <p align="center">
@@ -18,94 +18,114 @@
 </p>
 
 <p align="center">
-  <a href="#why-this-exists">Why</a> &bull;
-  <a href="#design-philosophy">Philosophy</a> &bull;
-  <a href="#quick-start">Quick Start</a> &bull;
-  <a href="#how-to-trigger">Trigger</a>
+  <a href="#demo">Demo</a> &bull;
+  <a href="#install">Install</a> &bull;
+  <a href="#first-use">First Use</a> &bull;
+  <a href="#vs-alternatives">vs Alternatives</a> &bull;
+  <a href="SKILL.md">Skill</a>
 </p>
 
 ---
 
-## Why This Exists
+## Demo
 
-Claude Code is for serious development. **Context is precious. Memory accumulates over months.**
+What changes after one audit pass on a real 87-file memory library:
 
-Most existing systems (Codex, OpenClaw, and most RAG-style frameworks) take an "auto-recall everything" path — the system silently decides what to remember, when, and how. For long-running serious projects, that means context pollution, no audit trail, and gradual drift no one notices.
+```
+                Before                              After
+   ─────────────────────────────       ─────────────────────────────
+   Compliance:        12%        →     Compliance:        99%
+   Naming violations: 31         →     Naming violations:  0
+   Missing context:   18         →     Missing context:    1
+   Broken index:       8         →     Broken index:       0
+   Oversized files:   42         →     Surfaced for split: 3
+   Time to grep "X":  5+ min     →     Time to grep "X":  ~10s
 
-We go the other way. **You** decide what's worth sedimenting. The skill teaches Claude *how* to write it well so months later it's still findable, readable, and trustworthy.
+   ⚠️  Untrusted, ungrep-able    →     ✓  Auditable, navigable
+       memory growth                       across months
+```
 
-## Design Philosophy
+The skill does no recording on its own. **You** trigger; **it** writes uniformly.
 
-### Triggered, not automatic
+## Why
 
-The skill activates only when you say so — "record what we learned today" / "wrap-up review" / "anything worth sedimenting?" — and never runs in the background. What enters your memory library is always intentional.
+Long-running projects accumulate memory entries the same way codebases accumulate dead code — silently, until search stops working. By month 3, you can't tell which entries are still true, which are duplicates of each other, or which file holds the answer to *that bug last quarter*.
 
-### Sediment, don't accumulate
+Claude Code's built-in auto-memory works for short projects. For longer ones, you need a **schema, an audit, and a discipline of intentional capture**. This skill packages all three.
 
-Each meaningful checkpoint — a bug fixed, a non-obvious decision, a long debug — becomes one structured note. Not because the system felt like saving something, but because *you* decided this is worth keeping.
+## How It Works
 
-### Audit, don't enforce
+- **Triggered by phrase, never automatic.** "Record this", "复盘", "audit memory" — and nothing else.
+- **One entry per checkpoint.** Each note follows a 3-type schema (feedback / reference / project) Claude applies consistently across sessions.
+- **Audit script, never hooks.** A bash one-shot tells you what's wrong. Nothing blocks your workflow.
+- **Zero storage.** Memory stays in `~/.claude/projects/<slug>/memory/` — plain markdown, git-friendly, fully yours.
 
-A bash script gives you a one-shot health check whenever you want it: how many entries violate conventions, how many files have grown too large, how many indexes are stale. **No hooks block your workflow.** Just a number to watch.
+## Install
 
-### The skill teaches the *how*
-
-Naming, structure, when to update vs split, when to create an index — these are decisions Claude tends to make inconsistently across sessions. The skill packages the judgment so Claude writes uniformly, even six months later in a fresh session.
-
-## Quick Start
+One command:
 
 ```bash
-git clone https://github.com/jau123/claude-memory-manager.git ~/code/claude-memory-manager
-
-mkdir -p ~/.claude/skills/memory-management/templates
-cp ~/code/claude-memory-manager/SKILL.md ~/.claude/skills/memory-management/SKILL.md
-cp ~/code/claude-memory-manager/templates/audit-memory.template.sh \
-   ~/.claude/skills/memory-management/templates/
+git clone https://github.com/jau123/claude-memory-manager.git && \
+  mkdir -p ~/.claude/skills/memory-management/templates && \
+  cp claude-memory-manager/SKILL.md ~/.claude/skills/memory-management/ && \
+  cp claude-memory-manager/templates/audit-memory.template.sh \
+     ~/.claude/skills/memory-management/templates/
 ```
 
-Per-project setup (audit script + CLAUDE.md protocol + MEMORY.md cheatsheet) → [INSTALL.md](INSTALL.md)
+**Verify** — open any Claude Code session and say:
 
-## How to Trigger
+> "audit memory"
 
-Just say what you mean — Claude matches keywords automatically:
+If Claude offers to run `scripts/audit-memory.sh` (or asks you to copy the template into your project), the skill is live.
 
-| You say... | Skill does... |
+Per-project setup (audit script + CLAUDE.md hook) → [INSTALL.md](INSTALL.md)
+
+## First Use
+
+The skill activates from natural language. No slash command.
+
+```
+You: "记一下今天那个 wildcard bug"
+→ Claude writes one feedback_*.md entry: filename, frontmatter, Why section, How-to-apply.
+
+You: "复盘"
+→ Claude walks recent session, surfaces 3–5 candidates, asks which to keep.
+
+You: "audit memory"
+→ Runs scripts/audit-memory.sh, reports compliance, lists files that need splitting.
+```
+
+Full trigger reference → [SKILL.md](SKILL.md)
+
+## vs Alternatives
+
+|  | Trigger | Audit | What gets recorded |
+|---|---|---|---|
+| Codex / OpenClaw / RAG frameworks | Automatic, opaque | None | Whatever the system decides |
+| Claude Code built-in auto-memory | Automatic | None | Per-session conclusions |
+| **claude-memory-manager** | **User phrase** | **One-command script** | **Only what you confirm** |
+
+The first two paths optimize for "remember everything for me." This skill optimizes for "remember exactly what I tell you to, in a way I can audit in six months."
+
+## What's in This Repo
+
+| File | Purpose |
 |---|---|
-| *"Record that wildcard bug"* / *"记一下今天的坑"* | Writes one new structured note |
-| *"Wrap-up review"* / *"复盘 / 开发完了"* | Walks through recent session, picks what's worth keeping |
-| *"Update this memory"* / *"Fix that conclusion"* | Decides whether to update in place or split out |
-| *"Audit memory"* | Runs the health-check script, reports compliance |
-| *"Bootstrap from zero"* | Sets up the index, schema, and cheatsheet for a new project |
-
-No `/skill` command needed.
-
-## Health Check
-
-When your memory library starts feeling tangled, run the audit script. It tells you in seconds:
-
-- Files that don't follow naming conventions
-- Entries missing essential context
-- Files that have grown too long and need splitting
-- Index sections that need a hub
-- Index links that don't resolve
-
-Soft warnings only. Nothing blocks. You decide what to fix.
-
-## File Structure
-
-```
-claude-memory-manager/
-├── SKILL.md                  # The skill itself
-├── INSTALL.md                # Setup walkthrough
-├── references/               # Design notes, schema, audit details
-├── templates/                # Portable bash health-check script
-└── examples/                 # Three real-world condensed notes
-```
+| [`SKILL.md`](SKILL.md) | The skill itself — 6 rules, 5 modes, schema, self-check. Drop into `~/.claude/skills/memory-management/`. |
+| [`templates/audit-memory.template.sh`](templates/audit-memory.template.sh) | Portable health-check script. Copy per project, edit one path. |
+| [`references/design-philosophy.md`](references/design-philosophy.md) | Why this design, what was rejected, what was tried and discarded. |
+| [`references/schema.md`](references/schema.md) | The naming + frontmatter + section conventions, in detail. |
+| [`references/audit-tool-guide.md`](references/audit-tool-guide.md) | Audit script options, output meaning, customization. |
+| [`examples/`](examples/) | Three condensed real-world entries — one per type. |
 
 ## When This Doesn't Fit
 
-Casual Claude.ai web chats, one-off scripts, or projects without a long maintenance horizon — built-in auto memory already serves you fine. The value of this skill scales with project lifespan.
+- Project < 1 month old or memory library < 10 entries — built-in auto-memory is enough.
+- You want semantic search / RAG retrieval — different category of tool.
+- You want background consolidation that runs while you sleep — also different category.
+
+The value of this skill scales with **project lifespan** and **entry count**. Below the threshold, the overhead isn't worth it.
 
 ## License
 
-MIT
+[MIT](LICENSE) · Issues and PRs welcome at [`jau123/claude-memory-manager`](https://github.com/jau123/claude-memory-manager/issues).
