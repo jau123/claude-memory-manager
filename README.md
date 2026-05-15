@@ -1,151 +1,107 @@
-# Claude Memory Management
+<h1 align="center">Claude Memory Manager</h1>
 
-> **教 Claude 怎么写好 memory,而不是替它写 memory**
+<p align="center">
+  <strong>A methodology skill that teaches Claude Code <em>how</em> to record memories — you decide <em>when</em>.</strong>
+  <br>
+  <sub>Built for serious, long-running development where context is precious and memory grows for months.</sub>
+</p>
 
-一个用户级 skill,管理 Claude Code 的人工 memory 知识库。教 Claude **决定**记什么 / 怎么写 / 何时更新 / 何时拆分,让记忆系统不漂移、不臃肿、找得到。
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="MIT"></a>
+  <img src="https://img.shields.io/badge/Platform-Claude_Code-orange?style=flat-square" alt="Claude Code">
+  <img src="https://img.shields.io/badge/Storage-Zero-green?style=flat-square" alt="Zero storage">
+  <img src="https://img.shields.io/badge/Hooks-None-blue?style=flat-square" alt="No hooks">
+</p>
 
-## 这是什么
+<p align="center">
+  <a href="#why-this-exists">Why</a> &bull;
+  <a href="#design-philosophy">Philosophy</a> &bull;
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#how-to-trigger">Trigger</a>
+</p>
 
-如果你用 Claude Code 超过 3 个月、跑过 3+ 项目、`~/.claude/projects/*/memory/` 已经堆了 30+ 文件,你大概率遇到过这些痛点:
+---
 
-- 新 session Claude 凭印象写 memory,命名不一致(`feedback_` / `notes_` / `bug-fix_` 各种)
-- 同主题踩坑被记了 3 次,因为 Claude 不知道已经有了
-- 单文件膨胀到 200+ 行,塞了 8 个不相关主题
-- MEMORY.md 索引 description 太模糊,Claude 凭它命中不了具体场景
-- 半年后回头看记忆系统一团乱,不知道从哪整理
+## Why This Exists
 
-**本 skill 解决的是上面这些问题**。它**不存储任何东西**(memory 还是 Claude 自己写),它教 Claude **怎么写得好**。
+Claude Code is for serious development. **Context is precious. Memory accumulates over months.**
 
-## 这不是什么
+Most existing systems (Codex, OpenClaw, and most RAG-style frameworks) take an "auto-recall everything" path — the system silently decides what to remember, when, and how. For long-running serious projects, that means context pollution, no audit trail, and gradual drift no one notices.
 
-- ❌ **不是 RAG / vector store**(那是 [claude-mem](https://github.com/thedotmack/claude-mem) / [Letta](https://www.letta.com/) 路线)
-- ❌ **不是自动 memory consolidator**(那是 [dream-skill](https://github.com/grandamenium/dream-skill) / Anthropic AutoDream)
-- ❌ **不是 CLAUDE.md improver**(那是 Anthropic 官方 [`claude-md-management`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/claude-md-management))
-- ❌ **不强制任何规范**(没有 PreToolUse hook 阻塞工作流)
+We go the other way. **You** decide what's worth sedimenting. The skill teaches Claude *how* to write it well so months later it's still findable, readable, and trustworthy.
 
-它是**方法论 skill**:把"如何写好 markdown 知识库"的判断标准、决策树、检查清单做成 Claude 可调用的工具。
+## Design Philosophy
 
-## 5 个设计原则
+### Triggered, not automatic
 
-1. **记忆是事实,方法在 skill** — memory file 装"我踩过 X",skill 装"如何决定 X 该不该被记"
-2. **承认 LLM 漂移,不强制反而靠 self-consistency 工作** — 实测合规率自然 ≥ 93%,加强制反而引入 dead rule 和工作流阻塞
-3. **接受中英文混合 schema** — `## Why` / `## 根因` / `## 教训` 都识别,跟着真实写法走
-4. **单文件 + 单组双层超载防御**(Rule 6) — 防臃肿,给具体阈值(>100 行 / ≥5 H2 / ≥15 entry)
-5. **配套 audit 脚本事后体检,不阻塞工作** — soft warning + 合规率指标
+The skill activates only when you say so — "record what we learned today" / "wrap-up review" / "anything worth sedimenting?" — and never runs in the background. What enters your memory library is always intentional.
 
-详细背景:[references/design-philosophy.md](references/design-philosophy.md)
+### Sediment, don't accumulate
 
-## 跟其他方案的差异
+Each meaningful checkpoint — a bug fixed, a non-obvious decision, a long debug — becomes one structured note. Not because the system felt like saving something, but because *you* decided this is worth keeping.
 
-| | **本 skill** | Anthropic `claude-md-improver` | [claude-mem](https://github.com/thedotmack/claude-mem) | [Letta](https://www.letta.com/) / [Mem0](https://mem0.ai/) | [dream-skill](https://github.com/grandamenium/dream-skill) |
-|---|---|---|---|---|---|
-| **类型** | 方法论 skill | CLAUDE.md 评分 + 改进 skill | RAG infrastructure | Agent memory framework | Auto-consolidator |
-| **管什么** | MEMORY.md + memory 子文件 | CLAUDE.md | 自动捕获 + 向量检索 | Episodic / Semantic / Procedural | 24h Stop hook 跑 consolidation |
-| **存储位置** | 不存储,只教写 | N/A | SQLite + Chroma | 框架内部 | N/A |
-| **强制层** | 零(soft warning) | 零 | 零(自动) | 自动 | Hook 强制 |
-| **用户可读 memory** | ✅ markdown 全可读 | ✅(CLAUDE.md) | ⚠️(部分 markdown) | ❌(机器消费) | ✅ markdown |
-| **跨项目复用** | ✅ 用户级 skill | ✅ 用户级 skill | ✅ CLI | ✅ 框架 | ✅ skill |
-| **audit 工具** | ✅ bash 脚本 | ❌ | ❌ | ❌ | ❌ |
-| **命名 schema** | ✅(feedback/reference/project)| ❌ | ❌ | ❌ | ❌ |
-| **超载阈值** | ✅ Rule 6 双层 | ❌(明确说 No size limits) | ❌ | ❌ | ❌ |
+### Audit, don't enforce
 
-**唯一同时具备**(a)用户级跨项目 +(b)决策方法论 +(c)bash audit 脚本 +(d)零 hook 软触发 **的 skill**。
+A bash script gives you a one-shot health check whenever you want it: how many entries violate conventions, how many files have grown too large, how many indexes are stale. **No hooks block your workflow.** Just a number to watch.
 
-## 适用场景
+### The skill teaches the *how*
 
-✅ **适合**:
-- 重度 Claude Code 用户(3+ 项目 / 3+ 个月使用)
-- 多人协作 + 想让项目知识库进 git review 的团队
-- 不喜欢"黑盒自动 memory",想要人工可审计知识库的工程师
-- 跨项目带方法论,不想每个项目重新建立 schema 的人
+Naming, structure, when to update vs split, when to create an index — these are decisions Claude tends to make inconsistently across sessions. The skill packages the judgment so Claude writes uniformly, even six months later in a fresh session.
 
-❌ **不适合**:
-- 一次性 vibe-coding 项目(用官方 auto memory 就够)
-- 想要 RAG / vector retrieval 自动语义搜索的(用 claude-mem / Mem0)
-- 企业团队想要中心化向量库方案
-
-## 为什么没有 Codex 版
-
-调查过(2026-05 Codex docs):
-- Codex `~/.codex/memories/` **不鼓励人工编辑**(官方文档明确说 "don't rely on editing them by hand as your primary control surface")
-- Codex `AGENTS.md` **每个目录只读一个文件**,**不支持 `@import`** 引用语法
-- Codex 没有"多 memory 文件 + 索引"的体系
-
-本 skill 的核心(命名 schema / MEMORY.md 索引 / Rule 6 拆分 / audit 跨文件体检)**在 Codex 上无落地点**。强行适配是给 Codex 用户假象,所以不做。
-
-如果你是 Codex 用户想要类似方法论,**本 skill 的设计哲学**([references/design-philosophy.md](references/design-philosophy.md))仍可参考,但工具不能直接用。
-
-## Install
+## Quick Start
 
 ```bash
 git clone https://github.com/jau123/claude-memory-manager.git ~/code/claude-memory-manager
 
-mkdir -p ~/.claude/skills/memory-management
-cp ~/code/claude-memory-manager/SKILL.md \
-   ~/.claude/skills/memory-management/SKILL.md
+mkdir -p ~/.claude/skills/memory-management/templates
+cp ~/code/claude-memory-manager/SKILL.md ~/.claude/skills/memory-management/SKILL.md
+cp ~/code/claude-memory-manager/templates/audit-memory.template.sh \
+   ~/.claude/skills/memory-management/templates/
 ```
 
-完整步骤(包括 audit 脚本 + 给项目装协议)→ [INSTALL.md](INSTALL.md)
+Per-project setup (audit script + CLAUDE.md protocol + MEMORY.md cheatsheet) → [INSTALL.md](INSTALL.md)
 
-## Usage
+## How to Trigger
 
-装完后,以下用户输入会触发 skill:
+Just say what you mean — Claude matches keywords automatically:
 
-| 你说 | Skill 做什么 |
+| You say... | Skill does... |
 |---|---|
-| "记一下今天那个 X 坑" | 直接走新建 memory 流程(命名 / frontmatter / Why) |
-| "复盘 / 开发完了看有什么值得记的" | 候选评估决策树筛 |
-| "更新这个 memory" / "修正 X 结论" | update 已有 vs 新建判断 |
-| "改 schema / 加新 type" | 必读历史踩坑清单(防重复犯错) |
-| "audit memory" | 跑 audit 脚本看合规率 |
-| "新项目零记忆起步" | bootstrap 流程(分组阈值 / CLAUDE.md 协议) |
+| *"Record that wildcard bug"* / *"记一下今天的坑"* | Writes one new structured note |
+| *"Wrap-up review"* / *"复盘 / 开发完了"* | Walks through recent session, picks what's worth keeping |
+| *"Update this memory"* / *"Fix that conclusion"* | Decides whether to update in place or split out |
+| *"Audit memory"* | Runs the health-check script, reports compliance |
+| *"Bootstrap from zero"* | Sets up the index, schema, and cheatsheet for a new project |
 
-跟 Claude 聊天时不需要显式 `/skill`,Claude 看 description 关键词自动匹配。
+No `/skill` command needed.
+
+## Health Check
+
+When your memory library starts feeling tangled, run the audit script. It tells you in seconds:
+
+- Files that don't follow naming conventions
+- Entries missing essential context
+- Files that have grown too long and need splitting
+- Index sections that need a hub
+- Index links that don't resolve
+
+Soft warnings only. Nothing blocks. You decide what to fix.
 
 ## File Structure
 
 ```
 claude-memory-manager/
-├── README.md                          # 你正在看的
-├── LICENSE                            # MIT-0
-├── SKILL.md                           # 主 skill 文件(装到 ~/.claude/skills/memory-management/)
-├── INSTALL.md                         # 安装步骤
-├── references/
-│   ├── design-philosophy.md           # 为什么这样设计 / 拒绝过的方案
-│   ├── schema.md                      # 命名 / frontmatter / Why 段 / Rule 6 规范
-│   └── audit-tool-guide.md            # audit 脚本详细使用
-├── templates/
-│   └── audit-memory.template.sh       # bash 体检脚本,复制到项目 scripts/
-└── examples/                          # 标准范例(真实项目浓缩版)
-    ├── feedback-example.md            # ✅ feedback 类示范
-    ├── reference-example.md           # ✅ reference 类示范
-    └── project-example.md             # ✅ project 类示范
+├── SKILL.md                  # The skill itself
+├── INSTALL.md                # Setup walkthrough
+├── references/               # Design notes, schema, audit details
+├── templates/                # Portable bash health-check script
+└── examples/                 # Three real-world condensed notes
 ```
 
-## Validated by
+## When This Doesn't Fit
 
-本 skill 经过 4 轮独立反馈迭代:
-
-1. **meigen 项目**(主项目,86 文件) — frontmatter 100% / feedback Why 93% baseline
-2. **反滥用上下文子任务** — 反馈 Mode 1 触发场景太窄(只覆盖"开发完后"),已加单次决策处置
-3. **OpenClaw 项目**(独立项目,13 文件) — 反馈跨项目 audit 脚本路径硬编码 + 中文冒号兼容 + 命名规范漏检,已修
-4. **3 轮对抗性 subagent 审查** — 暴露 hook 配置错位 / settings 位置 / topic file 不自动加载等设计陷阱,已避开
-
-## Roadmap
-
-- **v1.0**(当前):Claude Code 完整支持
-- **v1.x**(假设):
-  - 一键迁移工具(legacy 项目 memory 自动改名 + 补 frontmatter)
-  - VS Code extension(IDE 内体检 + lint)
-  - 跨项目 search(grep 多个项目的 memory)
-
-## Contributing
-
-Issues 和 PR 欢迎。本 skill 的设计原则之一是"承认 LLM 漂移",所以:
-
-- ✅ **欢迎**:新 type 提议 / 新 Rule 提议 / audit 检查项扩展 / 真实踩坑案例
-- ❌ **不欢迎**:加强制 hook / 自动消化 / RAG retrieval — 那是别的项目的方向
+Casual Claude.ai web chats, one-off scripts, or projects without a long maintenance horizon — built-in auto memory already serves you fine. The value of this skill scales with project lifespan.
 
 ## License
 
-MIT-0(MIT No Attribution)— 用就用,不需要署名。
+MIT
