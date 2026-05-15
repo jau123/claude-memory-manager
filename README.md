@@ -14,6 +14,10 @@
 </p>
 
 <p align="center">
+  <strong>English</strong> | <a href="README.zh-CN.md">中文</a>
+</p>
+
+<p align="center">
   <a href="#why-this-exists">Why</a> &bull;
   <a href="#design-philosophy">Philosophy</a> &bull;
   <a href="#quick-start">Quick Start</a> &bull;
