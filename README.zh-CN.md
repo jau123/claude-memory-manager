@@ -7,8 +7,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/jau123/claude-memory-manager/stargazers"><img src="https://img.shields.io/github/stars/jau123/claude-memory-manager?style=flat-square&color=yellow" alt="Stars"></a>
-  <a href="https://github.com/jau123/claude-memory-manager/commits/main"><img src="https://img.shields.io/github/last-commit/jau123/claude-memory-manager?style=flat-square" alt="Last commit"></a>
   <img src="https://img.shields.io/badge/Claude_Code-2.1%2B-orange?style=flat-square" alt="Claude Code 2.1+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-lightgrey?style=flat-square" alt="MIT"></a>
 </p>
