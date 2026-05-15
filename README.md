@@ -3,7 +3,7 @@
 <p align="center">
   <strong>A methodology skill that teaches Claude Code <em>how</em> to record memories — you decide <em>when</em>.</strong>
   <br>
-  <sub>Built for serious, long-running development where context is precious and memory grows for months.</sub>
+  <sub>Built for serious development — when a project iterates for months, the memory library accumulates drift and outdated entries.</sub>
 </p>
 
 <p align="center">

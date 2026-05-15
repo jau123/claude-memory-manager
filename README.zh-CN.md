@@ -3,7 +3,7 @@
 <p align="center">
   <strong>一个方法论 skill,教 Claude Code <em>怎么</em>沉淀记忆 —— 由你决定<em>什么时候</em>沉淀。</strong>
   <br>
-  <sub>为严肃、长期迭代的开发场景设计,上下文宝贵,记忆累积可达数月。</sub>
+  <sub>为严肃开发场景设计 —— 如果一个项目的开发周期长达数月,记忆系统会存有大量漂移和过时内容。</sub>
 </p>
 
 <p align="center">
