@@ -1,58 +1,56 @@
 ---
-name: supabase-egress-diagnosis
-description: ⭐⭐ Supabase egress 诊断标准方法 + 案例(25-37GB/天 → ~4GB/天,-85%)。pg_stat queryid 聚类 + "加 staleTime"是反复被错提的无效优化 + 治本是三层 cache 拆 + mutation 乐观双写
+name: database-egress-diagnosis
+description: Standard 15-minute method to localize a database egress spike (PostgreSQL + PostgREST stack). pg_stat_statements queryid clustering + common false leads + three-tier cache split + optimistic mutation writes.
 type: reference
 ---
 
-# Supabase Egress 诊断标准方法
+# Database Egress Diagnosis
 
-## 诊断方法(15 分钟内定位)
+A reusable diagnostic pipeline for the case "egress is climbing and the dashboard can't tell me which query." Written for PostgreSQL + PostgREST (e.g. Supabase).
+
+## Diagnosis (15 minutes to a culprit)
 
 ```sql
--- 1. pg_stat_statements 看 stats_reset 时间(确认窗口跟 egress 抬头对齐)
+-- 1. Confirm pg_stat_statements covers the window when egress climbed
 SELECT stats_reset, NOW() - stats_reset AS uptime FROM pg_stat_statements_info;
 
--- 2. 按 queryid 聚类找 calls × rows 大头
--- 关键:PostgREST CTE pgrst_source 模式下 calls = rows = 实际请求次数
+-- 2. Cluster by queryid; sort by calls × rows
+-- For PostgREST CTE pgrst_source, calls = rows = actual request count
 SELECT queryid, LEFT(REPLACE(query, E'\n', ' '), 180) AS q, calls, rows
 FROM pg_stat_statements
 WHERE query NOT ILIKE '%pg_stat%'
 ORDER BY rows DESC NULLS LAST LIMIT 30;
 
--- 3. 同一逻辑 query 可能有多个 queryid(SELECT 字段变化时 PostgREST 重生成 prepared statement)
+-- 3. The same logical query may produce multiple queryids
+-- (PostgREST regenerates prepared statements when SELECT fields change)
 ```
 
-## ⚠️ 反复被错误提出的"加 staleTime"无效优化
+## False Leads to Skip
 
-全局 staleTime 通常已设(例如 React Query 5min)。所以以下诊断结论永远是**错的**:
+Two recurring wrong answers when egress climbs:
 
-- "组件挂载触发 refetch,加 staleTime 30s"— ❌ 30s 比 5min 短反而变差
-- "refetchOnWindowFocus 触发太多"— ❌ 全局已禁用
+- "Component mount triggers refetch — add staleTime 30s." Global staleTime is usually already set (e.g. React Query 5min). 30s is shorter, so this makes it worse.
+- "refetchOnWindowFocus is too aggressive." Often already disabled globally.
 
-**真凶永远是 mutation invalidate**(不受 staleTime 影响,强制重拉)。
+The real culprit is almost always **mutation invalidate** — mutations force a refetch regardless of staleTime.
 
-## 治本架构(适用 query 占 PostgREST calls > 50%)
+## Treatment: Three-Tier Cache Split
 
-三层 cache 拆分:
+Applies when one query dominates PostgREST calls (e.g. > 50% of total rows):
 
-| 层 | 用途 | SELECT 体积 |
+| Tier | Purpose | Row size |
 |---|---|---|
-| 轻量 IDs | 只判断"是否存在"(isFavorited / hasItem) | ~80B/行 |
-| 完整 WithContent | 真正渲染嵌套数据 | ~2KB+/行 |
-| 单条 Detail | 详情面板单条查询(服务端 RLS 过滤) | ~300B |
+| Lightweight IDs | "Does this exist?" checks (isFavorited, hasItem) | ~80B |
+| Full WithContent | Renders nested data | ~2KB+ |
+| Single Detail | Detail panel, server-side RLS filtered | ~300B |
 
-mutation 策略:
-- 高频 toggle 类:乐观双写 IDs + WithContent(后者仅当 cache 已存在),用真实 id swap temp_id,**不**调 invalidateQueries
-- 低频用户主动 mutation:保留 invalidate WithContent 兜底
-- 23505 路径(cache 与服务端不同步)必须回 lookup 拿真实 row
+Mutation strategy:
 
-## 实测降幅参考
+- High-frequency toggles: optimistically write IDs + WithContent (only if cache already populated). Use real id to swap temp_id. Do not call `invalidateQueries`.
+- Low-frequency user-driven mutations: `invalidate WithContent` as a safety net is fine.
+- 23505 path (cache out of sync with server): fall back to a real lookup to fetch the canonical row.
 
-- **诊断**:pg_stat_statements 累计 5.8 天,useFavorites 嵌套 SELECT 占 PostgREST calls **76%**(14.7M / 19.3M)
-- **方案**:三层拆分 + 5 个 mutation 双写 cache + 低频路径 invalidate 兜底
-- **实测降幅**:25-37 GB/天 → **~4 GB/天(-85%)**
+## When This Pattern Applies
 
-## 何时复用这套方法
-
-- Supabase egress 突涨 + Dashboard 看不出具体来源 → 走 pg_stat queryid 聚类
-- 不要假设 staleTime / refetchOnWindowFocus 是问题源 — 检查全局配置先
+- Database egress climbing + dashboard cannot localize the source → walk through pg_stat queryid clustering above
+- Do not assume `staleTime` / `refetchOnWindowFocus` is the cause until you have ruled out mutation invalidate

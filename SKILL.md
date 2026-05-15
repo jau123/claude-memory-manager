@@ -5,7 +5,7 @@ description: Guide Claude Code memory and CLAUDE.md management — what to recor
 
 # Memory Management
 
-Guide capturing learnings into Claude Code's auto memory and CLAUDE.md without letting the system rot. Treat memory as a typed, evolving knowledge base — not a free-form journal.
+How to write into Claude Code's auto-memory and CLAUDE.md so the library stays searchable as the project grows.
 
 ## Quick Reference
 
@@ -21,9 +21,9 @@ Guide capturing learnings into Claude Code's auto memory and CLAUDE.md without l
 
 ## Important Rules
 
-### Rule 1:**记忆是事实,方法在 skill**
+### Rule 1:事实进 memory,方法进 skill
 
-memory file 装"我踩过 X 坑"、"业界 Y 数据"、"项目 Z 状态";本 skill 装"如何决定记什么 / 怎么写 / 怎么组织"。**不要把 schema 规范写到 memory 里**(类别错误)。
+memory file 装"踩过 X 坑"、"业界 Y 数据"、"项目 Z 状态";本 skill 装"如何决定记什么 / 怎么写 / 怎么组织"。不要把 schema 规范写到 memory 里(类别错误)。
 
 ### Rule 2:**先判断"是否值得记",再判断"记到哪"**
 
@@ -43,7 +43,7 @@ memory file 装"我踩过 X 坑"、"业界 Y 数据"、"项目 Z 状态";本 ski
 
 ### Rule 4:**memory 不自动加载,description 决定命中**
 
-topic file(memory/*.md)session 启动**不加载**,Claude 凭 MEMORY.md 索引里的 description 判断是否读。**description 必须场景关键词 + 核心结论混合**,否则 Claude 凭印象走人。
+topic file(memory/*.md)session 启动**不加载**,Claude 凭 MEMORY.md 索引里的 description 判断是否读。**description 必须场景关键词 + 核心结论混合**,否则 Claude 会凭印象决定读哪个。
 
 ### Rule 5:**skill 自身要符合 skill 教的规范**
 
@@ -73,8 +73,8 @@ Rule 3 优先 update,但有阈值。**触发拆分的信号**(单文件层):
 
 #### 历史踩坑案例(reference,非规则的一部分)
 
-- **单文件超载**:一个 `server_info.md` 134 行塞 8 个主题(基础设施 + 部署细节 + cron 列表 + 时区防错 + 故障手册 + ...),MEMORY.md 索引描述概括不全,Claude 命中不了子主题。拆 5 个独立 memory 后,每个主题精准命中。
-- **单组超载**:meigen "积分 & 反滥用"组 23 条 entry,新 session Claude 扫索引时有遗漏,处理新告警时重复造轮子。建 `anti-abuse hub memory` 聚合 9 个反滥用文件入口 → 解决。
+- **单文件超载**:一个 reference 文件长到 130+ 行,塞了 7-8 个独立子主题(基础设施、cron 列表、故障手册等),MEMORY.md 索引描述概括不全,Claude 命中不了具体子主题。拆成 5 个独立 memory 后每个主题精准命中。
+- **单组超载**:某分组累积 20+ 条 entry,新 session Claude 扫索引时有遗漏,处理任务时重复造轮子。建一个 hub memory 聚合相关入口 → 解决。
 
 ---
 
@@ -144,14 +144,14 @@ Rule 3 优先 update,但有阈值。**触发拆分的信号**(单文件层):
 ---
 name: kebab-case-slug
 description: 场景关键词 + 核心结论
-type: feedback | reference | project       # 平铺(推荐,实测占 87%)
+type: feedback | reference | project       # 平铺(推荐)
 # 或:
 # metadata:
-#   type: feedback | reference | project   # 嵌套(也接受,占 13%)
+#   type: feedback | reference | project   # 嵌套(兼容写法)
 ---
 ```
 
-**`type` 字段位置**:`type:` 平铺(推荐)或 `metadata.type:` 嵌套都接受。audit 脚本两种都识别。新建文件优先用平铺,跟现有大多数文件对齐。
+**`type` 字段位置**:`type:` 平铺(推荐)或 `metadata.type:` 嵌套都接受。audit 脚本两种都识别。新建文件优先用平铺,跟现有多数对齐。
 
 **description 风格判定**:
 
@@ -175,7 +175,7 @@ type: feedback | reference | project       # 平铺(推荐,实测占 87%)
 ## Why(或同义:## 根因 / ## 原因 / ## 教训 / ## 为什么)
 
 [为什么是这个结论 — 踩过的具体坑、对抗审查发现、用户偏好]
-**关键**:原因段保护未来对抗审查不重新质疑同一决策。
+**为什么必填**:没有原因段,下次重新讨论同一决策时往往会得出同一个错误结论。
 
 ## How to apply(可省略,如 description 已含场景关键词)
 
@@ -242,7 +242,7 @@ grep -l "<关键词>" memory/*.md
 #### 步骤 1:确认 auto memory 目录路径
 
 Claude Code 自动建 `~/.claude/projects/<project-slug>/memory/`,其中 `<project-slug>` = 项目绝对路径将 `/` 替换为 `-`。例:
-- 项目 `/Users/qiaowenlong/Documents/Project/meigen` → slug `-Users-qiaowenlong-Documents-Project-meigen`
+- 项目 `/Users/alice/Project/myapp` → slug `-Users-alice-Project-myapp`
 
 如果 Claude Code 已经为该项目自动创建过 auto memory,目录会存在。验证:`ls ~/.claude/projects/ | grep <项目名>`。
 
@@ -300,14 +300,14 @@ Claude Code 自动建 `~/.claude/projects/<project-slug>/memory/`,其中 `<proje
 ---
 name: kebab-case-slug
 description: 场景关键词 + 核心结论
-type: feedback | reference | project       # 平铺(推荐,87% 文件用)
+type: feedback | reference | project       # 平铺(推荐)
 # 或:
 # metadata:
-#   type: feedback | reference | project   # 嵌套(也接受,13% 用)
+#   type: feedback | reference | project   # 嵌套(兼容)
 ---
 ```
 
-audit 脚本两种都识别。新建文件优先平铺(跟现有多数对齐)。
+audit 脚本两种都识别。新建文件优先平铺。
 
 ### feedback 必含信息
 
@@ -381,15 +381,3 @@ bash <你的项目>/scripts/audit-memory.sh
 
 参考默认 auto memory 路径:`~/.claude/projects/<project-slug>/memory/`,见 Mode 5 步骤 1。
 
----
-
-## Why(本 skill 存在的理由)
-
-记忆系统天然会漂移(每个 session 新 Claude 不一定记得上次的规范)。把"如何管理记忆"的方法做成 **skill 而非 memory file**,因为:
-
-1. **skill 触发可靠**:用户自然语言触发(关键词匹配)走官方机制,比 hub 文件"Claude 主动读"靠谱
-2. **跨项目复用**:本 skill 在 `~/.claude/skills/`,所有项目共用一份方法
-3. **关注点分离**:事实(memory)和方法(skill)本质不同,混在一起类别错误
-4. **应对零记忆场景**:新项目从 0 起步时,skill 自带 bootstrap 流程
-
-memory 装"我踩过 X",skill 装"如何决定 X 该不该被记"。

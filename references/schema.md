@@ -39,7 +39,7 @@ type: feedback | reference | project | user
 | 加粗行内 | `**Why**:` / `**根因**:` |
 | 中英文冒号 | 上述都接受 `:` 或 `:` |
 
-**关键**:原因段保护未来对抗审查不重新质疑同一决策(已踩过 3 次坑)。
+**为什么必填**:没有原因段,下次重新讨论同一决策时往往会得出同一个错误结论(踩过 3 次坑)。
 
 ## feedback 类必含"何时复用"
 
@@ -96,11 +96,9 @@ type: feedback | reference | project | user
 
 | 指标 | 目标 | 工具 |
 |---|---|---|
-| frontmatter 合规率 | ≥ 95% | `audit-memory.sh` |
-| feedback Why 段合规率 | ≥ 90% | 同上 |
-| 命名规范合规率 | ≥ 95% | 同上 |
+| 硬规则合规率(frontmatter / Why / 命名) | ≥ 95% | `audit-memory.sh` |
 | 索引断链 | 0 | 同上 |
 | 单文件超载 | 信号级(逐个评估) | 同上 |
 | 单组超载 | 信号级(建 hub) | 同上 |
 
-合规率 < 95% 不要追 100%。LLM 系统不存在零违规,追 100% 会引入 dead rule。
+LLM 系统不存在零违规。追 100% 会引入 dead rule(规避手段),≥95% 是 healthy baseline 不是目标。

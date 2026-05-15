@@ -1,33 +1,36 @@
 ---
 name: current-focus
-description: 项目当前进行中的工作 / 临时配置 / 等观察的 metric。每周更新或重大决策后更新。新 session Claude 加载时看到本文件知道"还有什么没收尾"
+description: Project's in-flight work, temporary configs, metrics under observation. Updated weekly or after major decisions. New sessions read this to know what's left unfinished.
 type: project
 ---
 
-# 当前焦点(2026-05-15)
+# Current Focus
 
-## 进行中
+## In Flight
 
-- **favorites egress 重构 5/14 部署**(commit ec56868)
-  - 5/15 观察 24h 稳态,预期 -85%(25-37GB/天 → ~4GB/天)
-  - 若过渡期回弹 > 15GB/天需复盘
-  - 后续:监控月底 egress 总量
+- **Auth refactor (deployed YYYY-MM-DD)**
+  - Observing 24h stability; expected effect: X
+  - Roll back if Y regresses
+  - Follow-up: review metric Z end of month
 
-- **Supabase Spend Cap 临时 disabled**
-  - 原因:5/14 已用 200GB/月,月底大概率超 250GB 触发只读
-  - 6/1 billing reset 后重开
-  - 监控:每周看 [usage page](https://app.supabase.com/org/_/usage)
+- **Feature flag pending cleanup**
+  - Reason: rollout finished; flag still on for canary
+  - Remove after YYYY-MM-DD
 
-## Backlog(本周晚些时候做)
+## Backlog (this week)
 
-- [ ] CLAUDE.md 砍 < 200 行(当前 476 行)
-- [ ] anti-abuse hub memory 建立(9 个反滥用文件聚合入口)
+- [ ] Trim CLAUDE.md (currently N lines, target < M)
+- [ ] Build a hub memory for the X group (currently N entries, fragmented)
 
-## Backlog(暂搁置)
+## Backlog (deferred)
 
-- [ ] PreToolUse hook soft warning — 当前 baseline 93%+ 暂不必要
-- [ ] 30 天未触的 18 个 memory review(audit 输出)
+- [ ] Investigate PreToolUse hook for soft schema warnings — only if compliance drops below 95%
+- [ ] Review the N files flagged "30+ days untouched" by the latest audit
 
-## 演进信号
+## How This File Evolves
 
-本文件每次大决策后追加一段,旧段移到下方"## 历史"段保留。当前没有历史段(2026-05-15 是首版)。
+Each major decision appends a section. Stale sections move to `## History` below for archival.
+
+## History
+
+(none yet)
