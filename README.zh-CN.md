@@ -19,14 +19,14 @@
 
 项目跑几个月后,记忆库就难搜了。你分不清哪条还成立,也不知道上季度那个 bug 的答案藏在哪个文件里。
 
-Claude Code 自带的 auto-memory 对短期项目够用。对长期项目,这个 skill 给记忆库定了命名 schema,提供一个审计脚本,并且只在你明确触发时才写入。
+Claude Code 的 auto-memory(v2.1.59+)把记忆写成 plain markdown,放在 `~/.claude/projects/<slug>/memory/`,你可以读、改、版本控制。它**没**强制结构:不规定命名、没必填字段、不要求 feedback 类必有 "why" 段。这个 skill 加上这些规范,再配一个 bash 审计脚本查漂移。
 
 ## 工作方式
 
-- **手动触发**。"记一下"、"复盘"、"audit memory"。没有触发词不会写。
-- **每个节点一条**。每条按 3 种类型(feedback / reference / project)schema 写,Claude 跨 session 保持一致。
-- **审计脚本,不用 hook**。一个 bash 一次性报告哪里不对,不阻塞任何工作流。
-- **纯 markdown,落地磁盘**。记忆始终在 `~/.claude/projects/<slug>/memory/`,git 友好。
+- **在 auto-memory 之上加 schema**。`<type>_<topic>.md` 命名 + 必填 frontmatter(name / description / type)+ feedback 类必含 Why 段。auto-memory 仍然在写,skill 让 Claude 按规范写。
+- **触发词管理**。"audit memory" 跑审计脚本,"复盘" 回顾 session 挑值得记的。
+- **soft warning,不用 hook**。审计报漂移,不拦写入。
+- **纯 markdown,落地磁盘**。可读可改可 grep 可 git。skill 不加数据库不加守护进程。
 
 ## 效果
 
@@ -101,10 +101,10 @@ Skill 通过自然语言激活,不需要敲 `/` 命令。
 
 ## 与内置 auto-memory 对比
 
-|  | 触发 | 审计 | 记录什么 |
+|  | Schema | 审计 | 长期效果 |
 |---|---|---|---|
-| Claude Code 内置 auto-memory | 自动 | 无 | 每个 session 的结论 |
-| **claude-memory-manager** | **你说的触发词** | **一行命令的脚本** | **只有你确认的** |
+| 只用 auto-memory | 无(Claude 自己决定) | 无 | 文件累积但无命名 / 内容规范 |
+| **加这个 skill** | 3 种类型 + 必填字段 + feedback 必有 Why | 一行命令的脚本 | 库保持可审计、可搜 |
 
 要在 chunk 化的存储上做语义检索,看 Mem0 / Letta / Zep 这类向量后端。
 

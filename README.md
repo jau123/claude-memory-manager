@@ -19,14 +19,14 @@
 
 After a few months of work, the memory library is hard to search. You can't tell which entries are still current, which duplicate each other, or which file holds the answer to last quarter's bug.
 
-Claude Code's built-in auto-memory works fine on short projects. For longer ones, this skill enforces a naming schema, runs an audit script over the library, and only writes when you explicitly trigger it.
+Claude Code's auto-memory (v2.1.59+) writes plain markdown to `~/.claude/projects/<slug>/memory/` — you can read, edit, and version it. What it doesn't enforce is structure: naming, required fields, or a "why" section on each lesson. This skill adds those, plus a bash audit script that flags drift.
 
 ## How It Works
 
-- **Phrase-triggered.** "Record this", "audit memory", "review session". Nothing else writes.
-- **One entry per checkpoint.** Each note follows a 3-type schema (feedback / reference / project) Claude applies consistently across sessions.
-- **Audit script, no hooks.** A bash one-shot reports what's wrong. Nothing blocks your workflow.
-- **Plain markdown, on disk.** Memory stays in `~/.claude/projects/<slug>/memory/`. Git-friendly.
+- **Schema on top of auto-memory.** `<type>_<topic>.md` naming, required frontmatter (name / description / type), a Why section on feedback entries. Auto-memory still writes; the skill makes Claude write to a spec.
+- **Phrase-triggered review.** "Audit memory" runs the script. "Review session" walks the recent session and surfaces what's worth keeping.
+- **Soft warning, no hooks.** Audit reports drift; nothing blocks a write.
+- **Plain markdown on disk.** Edit, grep, git-commit. The skill doesn't add a database or daemon.
 
 ## Effect
 
@@ -104,10 +104,10 @@ Full trigger reference → [SKILL.md](SKILL.md)
 
 ## vs Built-in Auto-Memory
 
-|  | Trigger | Audit | What gets recorded |
+|  | Schema | Audit | Long-term result |
 |---|---|---|---|
-| Claude Code built-in auto-memory | Automatic | None | Per-session conclusions |
-| **claude-memory-manager** | **User phrase** | **One-command script** | **Only what you confirm** |
+| Auto-memory alone | None (Claude decides) | None | Files accumulate without a naming or content spec |
+| **with this skill** | 3-type schema + required fields + Why on feedback | One-command script | Library stays auditable and searchable |
 
 For semantic retrieval over chunked storage, look at vector-backed tools like Mem0, Letta, or Zep.
 
